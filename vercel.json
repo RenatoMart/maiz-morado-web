@@ -1,0 +1,8 @@
+{
+	"functions": {
+		"api/analizar.py": {
+			"maxDuration": 60,
+			"includeFiles": "api/_modelo/**"
+		}
+	}
+}

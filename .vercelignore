@@ -1,0 +1,10 @@
+.venvapi
+.venv
+scripts
+node_modules
+.next
+__pycache__
+*.pyc
+README.md
+dockerfile
+.github
