@@ -10,22 +10,22 @@
   },
   "dependencies": {
     "animejs": "^4.5.0",
-    "next": "16.3.3",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "next": "16.4.5",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
     "@fontsource/anton": "^5.3.0",
     "@fontsource/bebas-neue": "^5.3.0",
-    "@tailwindcss/postcss": "^4.3.3",
+    "@tailwindcss/postcss": "^4.3.4",
     "@types/animejs": "^3.1.13",
     "@types/node": "^26",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9.39.5",
-    "eslint-config-next": "16.3.3",
+    "eslint-config-next": "16.4.5",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.6",
+    "eslint-plugin-prettier": "^5.5.7",
     "eslint-plugin-tailwindcss": "^4.4.0",
     "eslint-plugin-unused-imports": "^4.4.1",
     "postcss": "^8",
