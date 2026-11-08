@@ -100,7 +100,9 @@ for ch, (x, y, w, h, _) in zip("UPN", upn):
     LETRAS.append(glifo_en_caja(ch, X + 4, Y + 4, X + w / 2 - 4, Y + h / 2 - 4))
 SUB = [linea("UNIVERSIDAD", 590, 1036, 380, 440, 1.2), linea("PRIVADA", 592, 868, 478, 538, 1.2), linea("DEL NORTE", 592, 933, 575, 637, 1.2)]
 
-ARROW_L = [(207, 60), (262, 60), (262, 640), (180, 640), (180, 218), (55, 305), (55, 213), (142, 139)]
+ARROW_L = [(207, 60), (262, 60), (262, 640), (180, 640), (180, 217), (55, 306), (55, 213),
+           # borde exterior de la cabeza: curva suave medida sobre el logo (sin quiebres)
+           (75, 198), (91, 186), (104, 174), (118, 162), (130, 150), (142, 138), (153, 126), (163, 114), (173, 102), (183, 90), (192, 78), (201, 66)]
 EJE = 559  # x del eje de simetría: la mitad derecha es el espejo de la izquierda
 ARROW_R = [(EJE - x, y) for x, y in ARROW_L][::-1]
 pts = lambda p: " ".join(f"{x},{y}" for x, y in p)
