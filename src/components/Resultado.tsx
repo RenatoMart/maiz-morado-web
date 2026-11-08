@@ -2,7 +2,6 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import { useState } from 'react';
 import { CLASES, VEREDICTO, type ResultadoAnalisis } from '../lib/clases';
 
 const TONO = {
@@ -41,9 +40,8 @@ export default function Resultado({
 	src: string;
 	datos: ResultadoAnalisis;
 }) {
-	const [soloSeguras, setSoloSeguras] = useState(false);
 	const v = VEREDICTO[datos.categoria];
-	const zonas = datos.zonas.filter(z => !soloSeguras || z.confianza >= 0.25);
+	const zonas = datos.zonas;
 	const clases = Object.entries(datos.porcentaje_por_clase)
 		.filter(([, p]) => p > 0)
 		.sort((a, b) => b[1] - a[1]);
@@ -93,16 +91,6 @@ export default function Resultado({
 					))}
 				</svg>
 			</figure>
-
-			<label className='flex min-h-11 w-fit items-center gap-3 text-sm font-medium'>
-				<input
-					checked={soloSeguras}
-					className='accent-tinta size-6'
-					onChange={e => setSoloSeguras(e.target.checked)}
-					type='checkbox'
-				/>
-				Mostrar solo las zonas más seguras (25 % o más)
-			</label>
 
 			<section aria-labelledby='t-por-que'>
 				<h3 className='border-amarillo border-b-4 pb-1 text-3xl' id='t-por-que'>
