@@ -5,7 +5,7 @@ type Props = {
 	tinta?: string;
 	/** Color de las flechas si debe ser distinto al del texto. */
 	flechas?: string;
-	/** `corta`: flechas y UPN. `completa`: con el nombre de la universidad. */
+	/** `corta`: flechas y UPN (el nombre de la universidad se omite). `completa`: con el nombre. */
 	variante?: 'corta' | 'completa';
 	className?: string;
 };
@@ -23,7 +23,7 @@ export default function LogoMarca({
 			aria-label='Universidad Privada del Norte'
 			className={className}
 			role='img'
-			viewBox={completa ? '40 40 1030 620' : '40 40 1030 280'}
+			viewBox='40 40 1030 620'
 		>
 			<g fill={flechas ?? tinta}>
 				<polygon points={FLECHA_IZQ} />

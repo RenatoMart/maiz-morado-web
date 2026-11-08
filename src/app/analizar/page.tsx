@@ -11,9 +11,9 @@ export default function Analizar() {
 	return (
 		<div className='min-h-dvh'>
 			<header className='bg-tinta border-amarillo border-b-4'>
-				<div className='mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4 sm:px-10'>
+				<div className='mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-3 sm:px-10'>
 					<Link aria-label='Volver al inicio' href='/'>
-						<Logo className='h-9 w-auto' />
+						<Logo />
 					</Link>
 					<p className='font-display text-amarillo hidden text-xl tracking-wider sm:block'>
 						Inspección de maíz morado
