@@ -1,25 +1,211 @@
 @import 'tailwindcss';
 
+/* Paleta tomada del logo de la UPN: amarillo, negro y blanco, con un hueso cálido para el fondo de trabajo. */
 :root {
-	--background: #ffffff;
-	--foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-	:root {
-		--background: #0a0a0a;
-		--foreground: #ededed;
-	}
+	--amarillo: #fbc105;
+	--amarillo-claro: #ffe27a;
+	--amarillo-suave: #fff3c4;
+	--tinta: #0f0f0f;
+	--suave: #5b5440;
+	--fondo: #fffaeb;
+	--superficie: #ffffff;
+	--linea: #0f0f0f;
+	--linea-suave: #e7dcb6;
+	--ok: #14532d;
+	--ok-fondo: #d9f3e0;
+	--medio: #6b4200;
+	--medio-fondo: #ffe9a8;
+	--no: #8e1b1b;
+	--no-fondo: #ffd9d6;
+	--anillo: #0f0f0f;
 }
 
 @theme inline {
-	--color-background: var(--background);
-	--color-foreground: var(--foreground);
-	--font-sans: var(--font-geist-sans);
-	--font-mono: var(--font-geist-mono);
+	--color-amarillo: var(--amarillo);
+	--color-claro: var(--amarillo-claro);
+	--color-suave-amarillo: var(--amarillo-suave);
+	--color-tinta: var(--tinta);
+	--color-suave: var(--suave);
+	--color-fondo: var(--fondo);
+	--color-superficie: var(--superficie);
+	--color-linea: var(--linea);
+	--color-borde: var(--linea-suave);
+	--font-sans: var(--font-cuerpo);
+	--font-display: var(--font-titulo);
 }
 
 body {
-	background: var(--background);
-	color: var(--foreground);
+	background: var(--fondo);
+	color: var(--tinta);
+	font-family: var(--font-cuerpo), system-ui, sans-serif;
+	line-height: 1.5;
+}
+
+h1,
+h2,
+h3 {
+	font-family: var(--font-titulo), Impact, sans-serif;
+	font-weight: 400;
+	letter-spacing: 0.02em;
+	line-height: 1;
+}
+
+:focus-visible {
+	outline: 3px solid var(--tinta);
+	outline-offset: 3px;
+	box-shadow: 0 0 0 6px var(--amarillo);
+}
+
+/* Lo que el navegador dibuja por su cuenta, con la paleta del logo */
+::selection {
+	background: var(--tinta);
+	color: var(--amarillo);
+}
+html {
+	caret-color: var(--tinta);
+	scrollbar-color: var(--tinta) var(--amarillo-suave);
+	scrollbar-width: thin;
+	-webkit-tap-highlight-color: transparent;
+}
+input[type='checkbox'] {
+	accent-color: var(--tinta);
+}
+
+button,
+a,
+label[for],
+[role='button'] {
+	cursor: pointer;
+}
+
+/* Portada: amarillo del logo con un leve brillo central */
+.fondo-upn {
+	background: radial-gradient(
+		circle at 50% 42%,
+		#ffd23f 0%,
+		var(--amarillo) 52%,
+		#f0b400 100%
+	);
+}
+
+.boton-iniciar {
+	display: inline-flex;
+	min-height: 3.25rem;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.7rem 2rem;
+	background: var(--tinta);
+	color: var(--amarillo);
+	font-family: var(--font-titulo), Impact, sans-serif;
+	font-size: 1.6rem;
+	letter-spacing: 0.08em;
+	line-height: 1;
+	border: 2px solid var(--tinta);
+	transition:
+		background-color 160ms cubic-bezier(0.2, 0, 0, 1),
+		color 160ms cubic-bezier(0.2, 0, 0, 1),
+		transform 160ms cubic-bezier(0.2, 0, 0, 1);
+}
+.boton-iniciar:hover {
+	background: transparent;
+	color: var(--tinta);
+}
+.boton-iniciar:active {
+	transform: scale(0.97);
+}
+
+/* Trabajo: tarjetas con borde grueso y sombra dura, como el trazo del logo */
+.tarjeta {
+	background: var(--superficie);
+	border: 2px solid var(--linea);
+}
+
+.btn {
+	display: inline-flex;
+	min-height: 3rem;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0.55rem 1.4rem;
+	border: 2px solid var(--linea);
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	transition:
+		background-color 140ms cubic-bezier(0.2, 0, 0, 1),
+		color 140ms cubic-bezier(0.2, 0, 0, 1),
+		transform 140ms cubic-bezier(0.2, 0, 0, 1);
+}
+.btn:disabled {
+	cursor: not-allowed;
+	opacity: 0.45;
+}
+.btn-negro {
+	background: var(--tinta);
+	color: var(--amarillo);
+}
+.btn-negro:hover:not(:disabled) {
+	background: var(--amarillo);
+	color: var(--tinta);
+}
+.btn-negro:active:not(:disabled) {
+	transform: scale(0.97);
+}
+.btn-claro {
+	background: var(--superficie);
+	color: var(--tinta);
+}
+.btn-claro:hover:not(:disabled) {
+	background: var(--amarillo-suave);
+}
+
+@keyframes subir {
+	from {
+		opacity: 0;
+		transform: translateY(14px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+.aparecer {
+	animation: subir 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Indicador de carga: la flecha del logo, partida en dos, que sube por turnos */
+@keyframes sube-izq {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	35% {
+		transform: translateY(-90px);
+	}
+}
+@keyframes sube-der {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	35% {
+		transform: translateY(-90px);
+	}
+}
+.flecha-carga .izq {
+	animation: sube-izq 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+.flecha-carga .der {
+	animation: sube-der 1s cubic-bezier(0.4, 0, 0.2, 1) 0.18s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.aparecer,
+	.flecha-carga .izq,
+	.flecha-carga .der {
+		animation: none;
+	}
+	* {
+		scroll-behavior: auto !important;
+		transition-duration: 0.01ms !important;
+	}
 }
