@@ -14,10 +14,33 @@ const cuerpo = Barlow({
 	weight: ['400', '500', '600', '700'],
 });
 
+const TITULO = 'UPN · Inspección de maíz morado';
+const DESCRIPCION =
+	'Sistema de visión artificial que detecta defectos visibles en mazorcas de maíz morado y orienta su clasificación de calidad.';
+
+// Dirección absoluta para las vistas previas (WhatsApp, Facebook, etc.): Vercel la entrega en el entorno.
+const DOMINIO =
+	process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
+
 export const metadata: Metadata = {
-	title: 'UPN · Inspección de maíz morado',
-	description:
-		'Sistema de visión artificial que detecta defectos visibles en mazorcas de maíz morado y orienta su clasificación de calidad.',
+	metadataBase: new URL(
+		DOMINIO ? `https://${DOMINIO}` : 'http://localhost:3000',
+	),
+	title: TITULO,
+	description: DESCRIPCION,
+	applicationName: 'Inspección de maíz morado',
+	openGraph: {
+		type: 'website',
+		locale: 'es_PE',
+		siteName: 'Universidad Privada del Norte',
+		title: TITULO,
+		description: DESCRIPCION,
+	},
+	twitter: {
+		card: 'summary_large_image',
+		title: TITULO,
+		description: DESCRIPCION,
+	},
 };
 
 export const viewport: Viewport = {
