@@ -1,58 +1,42 @@
-# Next.js + TypeScript + Anime.js (60FPS Architecture) 🚀
+# Inspección de maíz morado (web)
 
-This is a high-performance boilerplate template for building modern web applications using **Next.js (App Router)**, **TypeScript**, **Tailwind CSS**, and **Anime.js (v4)**.
+Sistema web que recibe la foto de una mazorca, marca las zonas con defectos, calcula qué proporción de la mazorca
+está afectada y dice si pasa (primera o segunda) o se descarta. Es un **apoyo a la inspección**: la decisión final
+es de la persona.
 
-Designed with strict Web Vitals and 60FPS animation principles in mind.
+- **Frontend:** Next.js (App Router) + Tailwind. Portada con el logo y el botón *Iniciar*, y la pantalla `/analizar`.
+- **Análisis:** función en Python (`api/analizar.py`) que ejecuta el modelo YOLO exportado a ONNX con OpenCV (`cv2.dnn`),
+  mide proporciones y decide. No usa PyTorch ni ONNX Runtime, y no guarda las fotos.
+- **Modelo:** `api/_modelo/best.onnx` y `api/_modelo/decision.json`, de `noche/modelo_final_v4` del proyecto de entrenamiento.
 
-## 🌟 Key Features
-
-- **Strict 60FPS Animations**: Only animates GPU-accelerated properties (`transform` and `opacity`) using Anime.js v4.
-- **Main Thread Protection**: Follows architectural best practices to prevent blocking the main thread.
-- **Hydration Safe**: Configured to prevent React hydration errors gracefully, even with browser extensions.
-- **Tailwind Strict Mode**: Avoids `transition-all` and costly repaints by strictly transitioning necessary properties.
-- **Pre-configured Folder Structure**: Includes `components/ui`, `components/layout`, `hooks`, `types`, and `lib` directories.
-
-## 📁 Project Structure
+## Desarrollo local
 
 ```bash
-src/
-├── app/             # Next.js App Router (pages, layout, globals.css)
-├── components/      
-│   ├── layout/      # Layout components (Header, Footer, etc.)
-│   └── ui/          # Reusable UI components
-├── hooks/           # Custom React hooks
-├── lib/             # Shared utilities and configurations
-├── types/           # Global TypeScript definitions
-└── utils/           
-    └── anime-runner.ts # Anime.js animation wrappers
+npm install
+uv venv --python 3.12 .venvapi && uv pip install --python .venvapi/bin/python -r requirements.txt
+.venvapi/bin/python scripts/servidor_local.py   # API en el puerto 8000
+npm run dev                                     # web en http://localhost:3000 (redirige /api/analizar al 8000)
 ```
 
-## 🚀 Getting Started
+Comprobar que la función da el mismo veredicto que el proyecto de entrenamiento (80 fotos de prueba):
 
-1. **Install dependencies:**
-   ```bash
-   npm install
-   # or
-   pnpm install
-   # or
-   yarn install
-   ```
+```bash
+.venvapi/bin/python scripts/probar_paridad.py RUTA/AL/PROYECTO/noche
+```
 
-2. **Run the development server:**
-   ```bash
-   npm run dev
-   ```
+## Publicar en Vercel
 
-3. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result. The main page includes a test component showcasing a strictly composed 60FPS GPU-accelerated animation using Anime.js.
+1. Importa el repositorio en Vercel (preset Next.js). `vercel.json` ya configura la función de Python y sus archivos.
+2. `.python-version` fija Python 3.12 y `requirements.txt` solo necesita `numpy` y `opencv-python-headless`.
+3. El paquete de Python mide unos **203 MB** instalados (OpenCV pesa mucho); el límite de Vercel que encontré en la documentación es 250 MB (y 500 MB según otra página), así que el margen es poco. Después de publicar, prueba `/analizar` con una foto real. **No se pudo probar el despliegue en Vercel desde aquí:**
+   revisa en el primer despliegue el tamaño del paquete, el tiempo de respuesta (unos 2 s por foto en una laptop) y la
+   memoria de la función.
 
-## 🛠️ Performance Directives
+El `dockerfile` de la plantilla solo empaqueta Next.js; no incluye la función de Python.
 
-If you intend to use this template, please adhere to these rendering and animation rules:
+## Pendientes
 
-- **Reflows vs Repaints**: NEVER animate layout properties like `width`, `height`, `top`, `left`, `margin`, or `padding`. Always use `transform` (`scale`, `translate`) and `opacity`.
-- **GPU Acceleration**: Make use of Tailwind's `transform-gpu` and `will-change-*` utility classes for frequently animated elements.
-- **Code-Splitting**: Load heavy components dynamically via `next/dynamic` or `React.lazy()` to protect the main thread and achieve a fast LCP (Largest Contentful Paint).
-
-## 📄 License
-
-MIT License. Feel free to use this boilerplate for your projects!
+- Reemplazar `public/logo-upn.svg` (marcador de posición) por el logo oficial de la UPN y ajustar `src/components/Logo.tsx`.
+- Los resultados del modelo son preliminares (ver el informe en el proyecto de entrenamiento): la categoría «Segunda» no se
+  pudo validar con mazorcas reales y el fondo de la foto puede influir.
+- Si se reentrena el modelo, copiar el nuevo `best.onnx` y `decision.json` a `api/_modelo/` y repetir `probar_paridad.py`.
