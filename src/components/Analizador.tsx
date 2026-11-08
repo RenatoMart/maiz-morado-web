@@ -25,12 +25,37 @@ export default function Analizador() {
 	const galeria = useRef<HTMLInputElement>(null);
 	const camara = useRef<HTMLInputElement>(null);
 	const vistaActual = useRef<string | null>(null);
+	const seccionResultado = useRef<HTMLElement>(null);
 
 	useEffect(() => {
 		return () => {
 			if (vistaActual.current) URL.revokeObjectURL(vistaActual.current);
 		};
 	}, []);
+
+	// En pantallas angostas el resultado queda debajo de la subida: al empezar el análisis
+	// (y al terminar) se baja solo hasta la foto para verla sin tener que hacer scroll.
+	const fase = estado.fase;
+	const tieneVista = fase !== 'inicio' && !!estado.vista;
+	useEffect(() => {
+		const sec = seccionResultado.current;
+		if (
+			!sec ||
+			(fase !== 'analizando' && fase !== 'listo' && fase !== 'error')
+		) {
+			return;
+		}
+		if (fase === 'analizando' && !tieneVista) return;
+		const { top } = sec.getBoundingClientRect();
+		if (top < window.innerHeight * 0.3) return; // ya está a la vista (pantalla ancha)
+		const sinMovimiento = matchMedia(
+			'(prefers-reduced-motion: reduce)',
+		).matches;
+		sec.scrollIntoView({
+			behavior: sinMovimiento ? 'auto' : 'smooth',
+			block: 'start',
+		});
+	}, [fase, tieneVista]);
 
 	const analizar = useCallback(async (archivo: File) => {
 		if (vistaActual.current) URL.revokeObjectURL(vistaActual.current);
@@ -191,7 +216,11 @@ export default function Analizador() {
 				)}
 			</section>
 
-			<section aria-labelledby='t-res' className='min-w-0'>
+			<section
+				aria-labelledby='t-res'
+				className='min-w-0 scroll-mt-4'
+				ref={seccionResultado}
+			>
 				<h2 className='flex items-center gap-3 text-3xl' id='t-res'>
 					<span className='bg-tinta text-amarillo grid size-10 place-items-center text-2xl'>
 						2
