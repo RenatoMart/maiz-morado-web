@@ -3,11 +3,12 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { ResultadoAnalisis as TipoResultado } from '../lib/clases';
+import type { RespuestaAnalisis as TipoResultado } from '../lib/clases';
 import { prepararImagen } from '../lib/imagen';
 import Camara from './Camara';
 import FlechaUPN from './FlechaUPN';
 import Resultado from './Resultado';
+import SinMazorca from './SinMazorca';
 
 type Estado =
 	| { fase: 'inicio' }
@@ -296,9 +297,16 @@ export default function Analizador() {
 								</button>
 							</div>
 						)}
-						{estado.fase === 'listo' && (
-							<Resultado datos={estado.datos} src={estado.vista} />
-						)}
+						{estado.fase === 'listo' &&
+							(estado.datos.mazorca_detectada === false ? (
+								<SinMazorca
+									mensaje={estado.datos.mensaje}
+									onOtraFoto={reiniciar}
+									src={estado.vista}
+								/>
+							) : (
+								<Resultado datos={estado.datos} src={estado.vista} />
+							))}
 					</div>
 				</section>
 			</div>

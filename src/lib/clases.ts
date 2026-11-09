@@ -10,6 +10,7 @@ export type Zona = {
 };
 
 export type ResultadoAnalisis = {
+	mazorca_detectada?: true;
 	categoria: Categoria;
 	pasa: boolean;
 	p_descarte: number;
@@ -20,6 +21,11 @@ export type ResultadoAnalisis = {
 	porcentaje_por_clase: Record<string, number>;
 	zonas: Zona[];
 };
+
+/** Respuesta cuando la foto no tiene una mazorca de maíz morado. */
+export type SinMazorca = { mazorca_detectada: false; mensaje: string };
+
+export type RespuestaAnalisis = ResultadoAnalisis | SinMazorca;
 
 export const CLASES: Record<
 	string,

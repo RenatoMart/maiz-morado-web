@@ -153,10 +153,50 @@ def _valor(clave, v):
     return f"{v:.0f}" if clave.startswith("n") else f"{v:.1f}"
 
 
+# ---- ¿hay una mazorca en la foto? ----
+# El detector solo busca defectos: sin esta comprobación, una foto sin maíz "no tiene defectos" y saldría como primera.
+# La mazorca de maíz morado es una mancha oscura, alargada y con textura (los granos). Los umbrales se calibraron con
+# las 751 fotos del conjunto (todas se aceptan) y con recortes de fondo, capturas y fotos de otros objetos (casi todos se rechazan).
+MENSAJE_SIN_MAZORCA = "No se reconoce una mazorca de maíz morado en la foto."
+
+
+def hay_mazorca(rgb):
+    """Devuelve (hay, medidas). rgb: imagen uint8 (alto, ancho, 3)."""
+    h, w = rgb.shape[:2]
+    e = 320 / max(h, w)
+    im = cv2.resize(rgb, None, fx=e, fy=e, interpolation=cv2.INTER_AREA) if e < 1 else rgb
+    im = cv2.GaussianBlur(im, (0, 0), 1.5)
+    L = cv2.cvtColor(im, cv2.COLOR_RGB2LAB)[..., 0].astype(np.float32) * 100 / 255
+    oscuro = (L < 42).astype(np.uint8)
+    oscuro = cv2.morphologyEx(oscuro, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
+    oscuro = cv2.morphologyEx(oscuro, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
+    n, etiquetas, est, _ = cv2.connectedComponentsWithStats(oscuro)
+    if n <= 1:
+        return False, {"fraccion": 0.0}
+    k = 1 + int(np.argmax(est[1:, cv2.CC_STAT_AREA]))
+    comp = (etiquetas == k).astype(np.uint8)
+    fraccion = float(comp.sum() / comp.size)
+    contornos, _ = cv2.findContours(comp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    (_, _), (rw, rh), _ = cv2.minAreaRect(max(contornos, key=cv2.contourArea))
+    alargada = max(rw, rh) / max(1.0, min(rw, rh))
+    relleno = float(comp.sum() / max(1.0, rw * rh))
+    gris = cv2.cvtColor(im, cv2.COLOR_RGB2GRAY).astype(np.float32)
+    media = cv2.blur(gris, (5, 5))
+    varianza = cv2.blur(gris * gris, (5, 5)) - media * media
+    interior = cv2.erode(comp, np.ones((9, 9), np.uint8)) > 0
+    textura = float(np.sqrt(np.maximum(varianza[interior], 0)).mean()) if interior.any() else 0.0
+    borde = float((comp[0].sum() + comp[-1].sum() + comp[:, 0].sum() + comp[:, -1].sum()) / (2 * sum(comp.shape)))
+    hay = 0.06 <= fraccion <= 0.90 and relleno >= 0.40 and textura >= 5.0 and alargada >= 1.05 and not (fraccion > 0.35 and borde > 0.25)
+    return bool(hay), {"fraccion": fraccion, "alargada": alargada, "relleno": relleno, "textura": textura, "borde": borde}
+
+
 def analizar(rgb):
     """rgb: imagen uint8 (alto, ancho, 3). Devuelve el resultado listo para enviar a la interfaz."""
     d = decision()
     chica = reducir(rgb)
+    hay, _ = hay_mazorca(chica)
+    if not hay:
+        return {"mazorca_detectada": False, "mensaje": MENSAJE_SIN_MAZORCA}
     dets = [x for x in detectar(rgb, d["confianza_minima"], d.get("iou_nms", 0.7))]
     mascara = mascara_mazorca(chica)
     r = rasgos(chica, mascara, dets)
@@ -182,7 +222,7 @@ def analizar(rgb):
             if t not in motivos:
                 motivos.append(t)
     return {
-        "categoria": cat, "pasa": cat != "Descarte", "p_descarte": round(float(p), 3), "umbral": float(d["umbral_descarte"]), "motivos": motivos,
+        "mazorca_detectada": True, "categoria": cat, "pasa": cat != "Descarte", "p_descarte": round(float(p), 3), "umbral": float(d["umbral_descarte"]), "motivos": motivos,
         "area_defectos_pct": round(float(r["area_total"]) * 100, 1), "mazorca_pct_imagen": round(float(mascara.mean()) * 100, 1),
         "porcentaje_por_clase": {CLASES[i]: round(float(r[f"a{i}"]) * 100, 1) for i in range(len(CLASES))},
         "zonas": [{"clase": CLASES[int(c)], "confianza": round(float(q), 3), "x": round(float(xc - w / 2), 4), "y": round(float(yc - h / 2), 4), "ancho": round(float(w), 4), "alto": round(float(h), 4)} for c, xc, yc, w, h, q in dets],
