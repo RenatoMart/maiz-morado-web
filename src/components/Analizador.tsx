@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ResultadoAnalisis as TipoResultado } from '../lib/clases';
 import { prepararImagen } from '../lib/imagen';
+import Camara from './Camara';
 import FlechaUPN from './FlechaUPN';
 import Resultado from './Resultado';
 
@@ -22,6 +23,7 @@ const TEXTO = {
 export default function Analizador() {
 	const [estado, setEstado] = useState<Estado>({ fase: 'inicio' });
 	const [arrastrando, setArrastrando] = useState(false);
+	const [camaraAbierta, setCamaraAbierta] = useState(false);
 	const galeria = useRef<HTMLInputElement>(null);
 	const camara = useRef<HTMLInputElement>(null);
 	const vistaActual = useRef<string | null>(null);
@@ -108,6 +110,27 @@ export default function Analizador() {
 		if (f) void analizar(f);
 	};
 
+	// Abre la cámara dentro de la página; si el navegador no puede (por ejemplo, sin HTTPS), usa el campo de archivo.
+	const abrirCamara = () => {
+		const puede =
+			window.isSecureContext && !!navigator.mediaDevices?.getUserMedia;
+		if (puede) setCamaraAbierta(true);
+		else camara.current?.click();
+	};
+
+	const fallaCamara = useCallback((mensaje: string) => {
+		setCamaraAbierta(false);
+		setEstado({ fase: 'error', mensaje });
+	}, []);
+	const cerrarCamara = useCallback(() => setCamaraAbierta(false), []);
+	const fotoDeCamara = useCallback(
+		(archivo: File) => {
+			setCamaraAbierta(false);
+			void analizar(archivo);
+		},
+		[analizar],
+	);
+
 	const reiniciar = () => {
 		if (vistaActual.current) URL.revokeObjectURL(vistaActual.current);
 		vistaActual.current = null;
@@ -119,155 +142,166 @@ export default function Analizador() {
 	const ocupado = estado.fase === 'preparando' || estado.fase === 'analizando';
 
 	return (
-		<div className='grid gap-8 sm:gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]'>
-			<section aria-labelledby='t-foto' className='flex flex-col gap-5'>
-				<h2 className='flex items-center gap-3 text-3xl' id='t-foto'>
-					<span className='bg-tinta text-amarillo grid size-10 place-items-center text-2xl'>
-						1
-					</span>
-					Elige una foto
-				</h2>
-				<input
-					accept='image/*'
-					className='sr-only'
-					id='archivo'
-					onChange={e => elegir(e.target.files)}
-					ref={galeria}
-					type='file'
+		<>
+			{camaraAbierta && (
+				<Camara
+					onCerrar={cerrarCamara}
+					onError={fallaCamara}
+					onFoto={fotoDeCamara}
 				/>
-				<input
-					accept='image/*'
-					capture='environment'
-					className='sr-only'
-					id='camara'
-					onChange={e => elegir(e.target.files)}
-					ref={camara}
-					type='file'
-				/>
-				<div
-					className={`tarjeta flex min-h-64 flex-col items-center justify-center gap-5 p-6 text-center transition-colors duration-200 sm:min-h-72 ${
-						arrastrando ? 'bg-amarillo' : 'bg-superficie'
-					}`}
-					onDragLeave={() => setArrastrando(false)}
-					onDragOver={e => {
-						e.preventDefault();
-						setArrastrando(true);
-					}}
-					onDrop={e => {
-						e.preventDefault();
-						setArrastrando(false);
-						if (!ocupado) elegir(e.dataTransfer.files);
-					}}
-				>
-					<div className='border-linea flex w-full flex-1 flex-col items-center justify-center gap-4 border-2 border-dashed px-4 py-6'>
-						<FlechaUPN
-							className='size-16'
-							color={arrastrando ? '#0F0F0F' : '#0F0F0F'}
-						/>
-						<p className='text-lg font-semibold'>
-							<span className='hidden [@media(pointer:fine)]:inline'>
-								Arrastra una foto aquí
-							</span>
-							<span className='[@media(pointer:fine)]:hidden'>
-								Elige una foto de la mazorca
-							</span>
-						</p>
-						<p className='text-suave -mt-3 text-sm'>
-							<span className='hidden [@media(pointer:fine)]:inline'>
-								o elige cómo subirla
-							</span>
-							<span className='[@media(pointer:fine)]:hidden'>
-								desde tu galería o con la cámara
-							</span>
-						</p>
-					</div>
-					<div className='flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row sm:gap-4'>
-						<button
-							className='btn btn-negro'
-							disabled={ocupado}
-							onClick={() => galeria.current?.click()}
-							type='button'
-						>
-							Subir foto
-						</button>
-						<button
-							className='btn btn-claro'
-							disabled={ocupado}
-							onClick={() => camara.current?.click()}
-							type='button'
-						>
-							Tomar foto
-						</button>
-					</div>
-				</div>
-				<ul className='text-suave border-amarillo flex flex-col gap-1 border-l-4 pl-4 text-sm'>
-					<li>Una sola mazorca por foto, bien iluminada.</li>
-					<li>Acércate hasta que la mazorca ocupe buena parte de la imagen.</li>
-					<li>Sin otras mazorcas ni objetos grandes alrededor.</li>
-				</ul>
-				{estado.fase === 'listo' && (
-					<button
-						className='btn btn-claro w-fit'
-						onClick={reiniciar}
-						type='button'
+			)}
+			<div className='grid gap-8 sm:gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]'>
+				<section aria-labelledby='t-foto' className='flex flex-col gap-5'>
+					<h2 className='flex items-center gap-3 text-3xl' id='t-foto'>
+						<span className='bg-tinta text-amarillo grid size-10 place-items-center text-2xl'>
+							1
+						</span>
+						Elige una foto
+					</h2>
+					<input
+						accept='image/*'
+						className='sr-only'
+						id='archivo'
+						onChange={e => elegir(e.target.files)}
+						ref={galeria}
+						type='file'
+					/>
+					<input
+						accept='image/*'
+						capture='environment'
+						className='sr-only'
+						id='camara'
+						onChange={e => elegir(e.target.files)}
+						ref={camara}
+						type='file'
+					/>
+					<div
+						className={`tarjeta flex min-h-64 flex-col items-center justify-center gap-5 p-6 text-center transition-colors duration-200 sm:min-h-72 ${
+							arrastrando ? 'bg-amarillo' : 'bg-superficie'
+						}`}
+						onDragLeave={() => setArrastrando(false)}
+						onDragOver={e => {
+							e.preventDefault();
+							setArrastrando(true);
+						}}
+						onDrop={e => {
+							e.preventDefault();
+							setArrastrando(false);
+							if (!ocupado) elegir(e.dataTransfer.files);
+						}}
 					>
-						Analizar otra foto
-					</button>
-				)}
-			</section>
-
-			<section
-				aria-labelledby='t-res'
-				className='min-w-0 scroll-mt-4'
-				ref={seccionResultado}
-			>
-				<h2 className='flex items-center gap-3 text-3xl' id='t-res'>
-					<span className='bg-tinta text-amarillo grid size-10 place-items-center text-2xl'>
-						2
-					</span>
-					Resultado
-				</h2>
-				<div aria-live='polite' className='mt-5'>
-					{estado.fase === 'inicio' && (
-						<p className='border-linea text-suave border-2 border-dashed p-8 text-center'>
-							Aquí verás la foto con las zonas marcadas, el porcentaje de la
-							mazorca afectado y si pasa o se descarta.
-						</p>
-					)}
-					{ocupado && (
-						<div className='flex flex-col gap-4'>
-							<div className='tarjeta bg-amarillo flex items-center gap-4 p-4'>
-								<FlechaUPN carga className='size-12 shrink-0' />
-								<p className='font-semibold'>{TEXTO[estado.fase]}</p>
-							</div>
-							{estado.vista && (
-								<img
-									alt='Foto que se está analizando'
-									className='border-linea max-h-[60vh] w-full border-2 bg-white object-contain opacity-80'
-									src={estado.vista}
-								/>
-							)}
-						</div>
-					)}
-					{estado.fase === 'error' && (
-						<div className='flex flex-col gap-4' role='alert'>
-							<p className='border-linea border-2 bg-(--no-fondo) p-4 font-medium text-(--no)'>
-								{estado.mensaje}
+						<div className='border-linea flex w-full flex-1 flex-col items-center justify-center gap-4 border-2 border-dashed px-4 py-6'>
+							<FlechaUPN
+								className='size-16'
+								color={arrastrando ? '#0F0F0F' : '#0F0F0F'}
+							/>
+							<p className='text-lg font-semibold'>
+								<span className='hidden [@media(pointer:fine)]:inline'>
+									Arrastra una foto aquí
+								</span>
+								<span className='[@media(pointer:fine)]:hidden'>
+									Elige una foto de la mazorca
+								</span>
 							</p>
+							<p className='text-suave -mt-3 text-sm'>
+								<span className='hidden [@media(pointer:fine)]:inline'>
+									o elige cómo subirla
+								</span>
+								<span className='[@media(pointer:fine)]:hidden'>
+									desde tu galería o con la cámara
+								</span>
+							</p>
+						</div>
+						<div className='flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row sm:gap-4'>
 							<button
-								className='btn btn-claro w-fit'
-								onClick={reiniciar}
+								className='btn btn-negro'
+								disabled={ocupado}
+								onClick={() => galeria.current?.click()}
 								type='button'
 							>
-								Intentar de nuevo
+								Subir foto
+							</button>
+							<button
+								className='btn btn-claro'
+								disabled={ocupado}
+								onClick={abrirCamara}
+								type='button'
+							>
+								Tomar foto
 							</button>
 						</div>
-					)}
+					</div>
+					<ul className='text-suave border-amarillo flex flex-col gap-1 border-l-4 pl-4 text-sm'>
+						<li>Una sola mazorca por foto, bien iluminada.</li>
+						<li>
+							Acércate hasta que la mazorca ocupe buena parte de la imagen.
+						</li>
+						<li>Sin otras mazorcas ni objetos grandes alrededor.</li>
+					</ul>
 					{estado.fase === 'listo' && (
-						<Resultado datos={estado.datos} src={estado.vista} />
+						<button
+							className='btn btn-claro w-fit'
+							onClick={reiniciar}
+							type='button'
+						>
+							Analizar otra foto
+						</button>
 					)}
-				</div>
-			</section>
-		</div>
+				</section>
+
+				<section
+					aria-labelledby='t-res'
+					className='min-w-0 scroll-mt-4'
+					ref={seccionResultado}
+				>
+					<h2 className='flex items-center gap-3 text-3xl' id='t-res'>
+						<span className='bg-tinta text-amarillo grid size-10 place-items-center text-2xl'>
+							2
+						</span>
+						Resultado
+					</h2>
+					<div aria-live='polite' className='mt-5'>
+						{estado.fase === 'inicio' && (
+							<p className='border-linea text-suave border-2 border-dashed p-8 text-center'>
+								Aquí verás la foto con las zonas marcadas, el porcentaje de la
+								mazorca afectado y si pasa o se descarta.
+							</p>
+						)}
+						{ocupado && (
+							<div className='flex flex-col gap-4'>
+								<div className='tarjeta bg-amarillo flex items-center gap-4 p-4'>
+									<FlechaUPN carga className='size-12 shrink-0' />
+									<p className='font-semibold'>{TEXTO[estado.fase]}</p>
+								</div>
+								{estado.vista && (
+									<img
+										alt='Foto que se está analizando'
+										className='border-linea max-h-[60vh] w-full border-2 bg-white object-contain opacity-80'
+										src={estado.vista}
+									/>
+								)}
+							</div>
+						)}
+						{estado.fase === 'error' && (
+							<div className='flex flex-col gap-4' role='alert'>
+								<p className='border-linea border-2 bg-(--no-fondo) p-4 font-medium text-(--no)'>
+									{estado.mensaje}
+								</p>
+								<button
+									className='btn btn-claro w-fit'
+									onClick={reiniciar}
+									type='button'
+								>
+									Intentar de nuevo
+								</button>
+							</div>
+						)}
+						{estado.fase === 'listo' && (
+							<Resultado datos={estado.datos} src={estado.vista} />
+						)}
+					</div>
+				</section>
+			</div>
+		</>
 	);
 }
